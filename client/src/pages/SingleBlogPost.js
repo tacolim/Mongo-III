@@ -10,7 +10,7 @@ export default class SingleBlogPost extends Component {
       post: {
         title: 'This is a FAKE blog post title', 
         _id: '234lj23kjh', 
-        author: 'Patrick Saves the Day',
+        author: {username: 'Patrick Saves the Day', _id: '345lkj43'},
         content: 'This is some FAKE content', 
         comments: [
           {text:'This is a FAKE comment', author: 'Stanley Yelnats'},
@@ -27,13 +27,12 @@ export default class SingleBlogPost extends Component {
 
   getBlogPost(){
     const { id } = this.props.match.params
-    console.log(id);
     axios.get(`http://localhost:3030/posts/${id}`)
       .then((data) => {
         this.setState({post: data.data});
       })
       .catch((err) => {
-        console.log('You are seeing this error because you have yet to implement the `post` to get single post', err );
+        console.log('Error on GET method to postById, you may want to check your create post endpoint', err );
       });
   }
   
@@ -66,7 +65,7 @@ export default class SingleBlogPost extends Component {
     return (
       <div>
         <h4>{title}</h4>
-        <h5>{author}</h5>
+        <h5>{author.username}</h5>
         <div>{content}</div>
         {comments.map((comment, ind) => {
           return <Comment comment={comment} key={ind} />
