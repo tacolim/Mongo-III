@@ -19,13 +19,23 @@ const createPost = (req, res) => {
     });
 };
 
+const addPost = (req, res) => {
+  const { id } = req.body;
+  Post.find({ '_id': id }, (err, post) => {
+    if (err) {
+        res.status(500).json(err);
+    }
+    res.json(post);
+  });
+};
+
 const listPosts = (req, res) => {
   Post.find({}, (err, posts) => {
     if (err) {
       res.status(500).json(err);
     }
     const list = posts.map(post => (post.title, post._id));
-    res.json();
+    res.json(list);
   });
 };
 
@@ -66,5 +76,6 @@ module.exports = {
   listPosts,
   findPost,
   addComment,
+  addPost
 };
 
