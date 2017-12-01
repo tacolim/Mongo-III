@@ -2,8 +2,11 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const port = process.env.PORT || 3030;
+
+const routes = require('./api/routes/routes');
+
 const server  = express();
+const port = process.env.PORT || 3030;
 
 const corsOptions = {
     "origin": "*",
@@ -15,7 +18,7 @@ const corsOptions = {
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://localhost/blog-posts', { useMongoClient: true });
 
-server.use(bodyParser.urlencoded({extended: true}));
+server.use(bodyParser.urlencoded({ extended: true }));
 server.use(bodyParser.json());
 
 server.use(cors());
@@ -26,7 +29,6 @@ server.use((req, res, next) => {
     next();
 });
 
-const routes = require('./api/routes/routes');
 routes(server);
 
 server.listen(port, () => {

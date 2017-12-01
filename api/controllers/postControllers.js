@@ -1,81 +1,77 @@
-const mongoose = require('mongoose');
-
 const Post = require('../models/postModels');
-// const Comment = require('../models/commentModels');
 
 const STATUS_USER_ERROR = 422;
 
 /* Fill in each of the below controller methods */
-const createPost = (req, res) => {
-  const { author, title, content } = req.body;
-  const newPost = new Post({ title, text });
-  newPost.save()
-    .then((createdPost) => {
-      res.json(createdPost);
-    })
-    .catch((err) => {
-      res.status(STATUS_USER_ERROR).json({ errorMessage: err.message });
-      return;
-    });
-};
-
-const addPost = (req, res) => {
-  const { id } = req.body;
-  Post.find({ '_id': id }, (err, post) => {
-    if (err) {
-        res.status(500).json(err);
-    }
-    res.json(post);
-  });
-};
-
-const listPosts = (req, res) => {
-  Post.find({}, (err, posts) => {
+const postCreate = (req, res) => {
+  const { title, content, author } = req.body;
+  const newPost = new Post({ title, content, author });
+  newPost.save(newPost, (err, savedPost) => {
     if (err) {
       res.status(500).json(err);
-    }
-    const list = posts.map(post => (post.title, post._id));
-    res.json(list);
-  });
-};
-
-const findPost = (req, res) => {
-  const { id } = req.params;
-  Post.find({ '_id': id }, (err, post) => {
-      if (err) {
-          res.status(500).json(err);
-      }
-      res.json(post);
-  });
-};
-
-const addComment = (req, res) => {
-  const { id } = req.params;
-  const { text, author } = req.body;
-  const newComment = new Comment({ text, author });
-  newComment.save().then((comment) => {
-    Post.findById(id, (postErr, post) => {
-      if (postErr || !post) {
-        res.status(STATUS_USER_ERROR);
-        res.json({ message: `post not found at id ${id}` });
-      }
-      post.comments.push(comment);
-      post.save();
-      res.json({ success: 'hoorray!!' });
-    }).catch((err) => {
-      res.status(STATUS_USER_ERROR).json({ errorMessage: err.message });
       return;
-    });
+    }
+    res.json(savedPost);
   });
+};
+
+const postsList = (req, res) => {
+  Post.find({})
+    .select('title')
+    .exec()
+    .then(posts => {
+      if (posts.length === 0) throw new Error();
+      res.json(posts);
+    })
+    .catch(err => res.status(422).json(err));
+};
+
+const postFind = (req, res) => {
+  const { id } = req.params;
+  Post.findById(id)
+    .populate('author comments.author', 'username')
+    .exec()
+    .then(singlePost => {
+      if (singlePost === null) throw new Error();
+      res.json(singlePost);
+    })
+    .catch(err => res.status(422).json(err));
+};
+
+const commentAdd = (req, res) => {
+  const { id } = req.params;
+  const { author, text } = req.body;
+  const comment = { author, text };
+  Post.findById(id)
+    .then(post => {
+      if (post === null) throw new Error();
+      const comments = post.comments;
+      comments.push(comment);
+      post
+        .save()
+        .then(newPost => {
+          Post.findById(newPost._id)
+            .populate('comments.author', 'username')
+            .exec((badError, savedPost) => {
+              if (badError) {
+                throw new Error();
+              }
+              res.json(savedPost);
+            });
+        })
+        .catch(err => {
+          throw new Error();
+        });
+    })
+    .catch(err => res.status(422).json({ error: 'No Post!' }));
 };
 
 
 
 module.exports = {
-  createPost,
-  listPosts,
-  findPost,
-  addComment,
-  addPost
+  postCreate,
+  postsList,
+  postFind,
+  commentAdd
 };
 
